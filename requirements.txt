@@ -1,0 +1,8 @@
+opencv-python
+numpy
+ultralytics
+python-dotenv
+PyYAML
+fastapi
+uvicorn[standard]
+pytest

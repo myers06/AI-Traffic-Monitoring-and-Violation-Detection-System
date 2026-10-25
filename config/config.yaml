@@ -1,0 +1,27 @@
+model:
+  weights: yolov8n.pt        # auto-downloaded on first run
+  conf: 0.35
+  iou: 0.5
+  imgsz: 640
+  device: null               # null = auto
+  tracker: bytetrack.yaml
+
+classes:                     # COCO ids
+  person: 0
+  motorcycle: 3
+
+video:
+  frame_skip: 1              # process every Nth frame
+
+output:
+  dir: output/violations
+  save_frames: true
+
+triple_riding:
+  enabled: true
+  min_riders: 3              # 3+ persons on one bike = violation
+  min_overlap: 0.4           # fraction of person box that must lie in the rider zone
+  zone_expand_top: 0.9       # rider zone extends above bike by 90% of bike height
+  zone_expand_side: 0.1
+  min_consecutive_frames: 5  # must hold for N frames before flagging
+  stale_after_frames: 30     # forget tracks not seen for N frames
