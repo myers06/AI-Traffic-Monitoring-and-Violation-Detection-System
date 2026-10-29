@@ -1,47 +1,41 @@
-# ---------- Python ----------
+
+# Python virtual environments
 .venv/
-venv/
-env/
+.venv-1/
+
+# Python cache files
 __pycache__/
 *.py[cod]
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
 
-# ---------- Secrets and local config ----------
+# Environment variables and secrets
 .env
 .env.*
-!.env.example
 
-# ---------- Node / React ----------
-frontend/node_modules/
-frontend/build/
-frontend/.eslintcache
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# ---------- Model weights ----------
-*.pt
-*.pth
-*.onnx
-*.weights
-
-# ---------- Project data and outputs ----------
-data/input/*
-!data/input/.gitkeep
-output/
-runs/
-
-# ---------- Editor and OS ----------
+# IDE settings
 .vscode/
 .idea/
+
+# Operating system files
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Node.js dependencies
 node_modules/
 
+# Video files
 *.mp4
+*.avi
+*.mov
 videos/
+
+# Model and backup files
+*.pt
 config/*.bak
+
+# Generated outputs
+runs/
+
+# Project-specific generated files
+bus.jpg
+vehicle_tracking.csv
