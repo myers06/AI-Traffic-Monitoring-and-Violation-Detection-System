@@ -1,17 +1,20 @@
 model:
-  weights: yolov8n.pt        # auto-downloaded on first run
+  weights: yolov8n.pt
   conf: 0.35
   iou: 0.5
   imgsz: 640
-  device: null               # null = auto
+  device: null
   tracker: bytetrack.yaml
 
-classes:                     # COCO ids
+classes:
   person: 0
+  car: 2
   motorcycle: 3
+  bus: 5
+  truck: 7
 
 video:
-  frame_skip: 1              # process every Nth frame
+  frame_skip: 1
 
 output:
   dir: output/violations
@@ -19,9 +22,19 @@ output:
 
 triple_riding:
   enabled: true
-  min_riders: 3              # 3+ persons on one bike = violation
-  min_overlap: 0.4           # fraction of person box that must lie in the rider zone
-  zone_expand_top: 0.9       # rider zone extends above bike by 90% of bike height
+  min_riders: 3
+  min_overlap: 0.4
+  zone_expand_top: 0.9
   zone_expand_side: 0.1
-  min_consecutive_frames: 5  # must hold for N frames before flagging
-  stale_after_frames: 30     # forget tracks not seen for N frames
+  min_consecutive_frames: 5
+  stale_after_frames: 30
+
+plates:
+  enabled: true             # read the plate of every vehicle in the video
+  crop_padding: 0.15        # extra space around the vehicle before reading
+  min_length: 5             # ignore reads shorter than this
+  good_confidence: 0.6      # stop retrying a vehicle once a read is this confident
+  scan_every_frames: 5      # how often to try each vehicle
+  max_attempts: 15          # give up on a vehicle after this many tries
+  min_vehicle_width: 80     # skip vehicles smaller than this (pixels), too far to read
+  stale_after_frames: 60    # vehicle gone this long = save its plate

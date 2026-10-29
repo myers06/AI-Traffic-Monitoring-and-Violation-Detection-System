@@ -1,14 +1,41 @@
 
+# Python virtual environments
 .venv/
 .venv-1/
+
+# Python cache files
 __pycache__/
-*.pyc
+*.py[cod]
+
+# Environment variables and secrets
 .env
+.env.*
+
+# IDE settings
 .vscode/
-runs/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node.js dependencies
+node_modules/
+
+# Video files
 *.mp4
 *.avi
 *.mov
+videos/
+
+# Model and backup files
 *.pt
+config/*.bak
+
+# Generated outputs
+runs/
+
+# Project-specific generated files
 bus.jpg
 vehicle_tracking.csv

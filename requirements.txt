@@ -6,3 +6,6 @@ PyYAML
 fastapi
 uvicorn[standard]
 pytest
+easyocr
+fast-alpr
+python-multipart
