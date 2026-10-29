@@ -3,12 +3,16 @@ import threading
 from collections import Counter
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
+import tempfile
+from fast_alpr import ALPR
 from app.config import ROOT, load_config
 from app.pipeline import ViolationPipeline
+from app.database import get_all_violations
+
 
 app = FastAPI(title="Traffic Violation Detection")
 
@@ -18,6 +22,17 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 LOG_PATH = OUT_DIR / "violations.jsonl"
 
 app.mount("/evidence", StaticFiles(directory=str(OUT_DIR)), name="evidence")
+VIDEO_PATH = ROOT / "videos" / "17022934_4096_2160_60fps.mp4"
+
+@app.get("/api/video")
+def get_video():
+    if not VIDEO_PATH.is_file():
+        raise HTTPException(404, "Traffic video not found")
+    return FileResponse(
+        VIDEO_PATH,
+        media_type="video/mp4",
+        filename=VIDEO_PATH.name,
+    )
 
 _pipeline: ViolationPipeline | None = None
 _lock = threading.Lock()  # tracker state is shared, so one run at a time
@@ -95,7 +110,9 @@ def status():
 @app.get("/api/violations")
 def api_violations(type: str | None = None):
     return read_violations(type)
-
+@app.get("/api/database-violations")
+def database_violations():
+    return get_all_violations()
 
 @app.get("/api/stats")
 def stats():
@@ -112,5 +129,83 @@ def clear():
     LOG_PATH.unlink(missing_ok=True)
     return {"cleared": True}
 
+
+# -- photo number plate recognition ----------------------------------------
+
+_photo_alpr = None
+
+
+def get_photo_alpr():
+    global _photo_alpr
+    if _photo_alpr is None:
+        _photo_alpr = ALPR(ocr_model="cct-xs-v2-global-model")
+    return _photo_alpr
+
+
+@app.post("/api/recognize-photo")
+async def recognize_photo(file: UploadFile = File(...)):
+    allowed_types = {"image/jpeg", "image/png"}
+
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a JPG or PNG image."
+        )
+
+    image_bytes = await file.read()
+
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="The uploaded image is empty.")
+
+    if len(image_bytes) > 15 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="Image is too large. Maximum size is 15 MB."
+        )
+
+    suffix = ".png" if file.content_type == "image/png" else ".jpg"
+
+    try:
+        with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
+            temp_file.write(image_bytes)
+            temp_file.flush()
+
+            results = get_photo_alpr().predict(temp_file.name)
+
+        plates = []
+
+        for result in results:
+            box = result.detection.bounding_box
+            plates.append({
+                "text": (result.ocr.text or "").strip() or None,
+                "detection_confidence": round(
+                    float(result.detection.confidence), 3
+                ),
+                "box": {
+                    "x1": int(box.x1),
+                    "y1": int(box.y1),
+                    "x2": int(box.x2),
+                    "y2": int(box.y2),
+                },
+            })
+
+        return {
+            "filename": file.filename,
+            "plate_count": len(plates),
+            "plates": plates,
+            "message": (
+                "Recognition complete."
+                if any(p["text"] for p in plates)
+                else "No readable plate text found."
+            ),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Photo recognition failed: {exc}"
+        ) from exc
 
 # -- original routes,

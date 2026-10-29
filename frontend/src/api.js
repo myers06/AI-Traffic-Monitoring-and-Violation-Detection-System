@@ -25,3 +25,14 @@ export const startAnalysis = (source) =>
   });
 
 export const clearResults = () => request("/api/clear", { method: "POST" });
+export const getDatabaseViolations = () =>
+  request("/api/database-violations");
+export const recognizePhoto = (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return request("/api/recognize-photo", {
+    method: "POST",
+    body: formData,
+  });
+};
