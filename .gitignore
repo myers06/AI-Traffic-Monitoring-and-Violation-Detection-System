@@ -41,3 +41,7 @@ runs/
 Thumbs.db
 desktop.ini
 node_modules/
+
+*.mp4
+videos/
+config/*.bak
