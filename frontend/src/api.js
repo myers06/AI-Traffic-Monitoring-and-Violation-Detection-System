@@ -36,3 +36,37 @@ export const recognizePhoto = (file) => {
     body: formData,
   });
 };
+
+export const getVideos = () => request("/api/videos");
+
+export const getPlates = (video) =>
+  request("/api/plates" + (video ? `?video=${encodeURIComponent(video)}` : ""));
+
+export const videoUrl = (path) => `/api/video?path=${encodeURIComponent(path)}`;
+
+// XHR instead of fetch so we can report upload progress for large videos.
+export const uploadVideo = (file, onProgress) =>
+  new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const form = new FormData();
+    form.append("file", file);
+
+    xhr.open("POST", "/api/videos/upload?analyze=true");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      let body = {};
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {
+        /* not JSON */
+      }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+      else reject(new Error(body.detail || xhr.statusText || "Upload failed"));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed. Check the server is running."));
+    xhr.send(form);
+  });
